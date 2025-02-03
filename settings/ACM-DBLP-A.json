@@ -1,0 +1,8 @@
+{
+  "alpha": 0.90,
+  "beta": 0.15,
+  "gamma_p": 1e-2,
+  "init_threshold_lambda": 1,
+  "lr": 2e-4,
+  "epochs": 20
+}
