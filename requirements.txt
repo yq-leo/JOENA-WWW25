@@ -4,3 +4,4 @@ torch
 torch_geometric
 networkx
 tqdm
+tensorboard

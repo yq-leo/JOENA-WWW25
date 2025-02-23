@@ -1,5 +1,5 @@
 {
-  "alpha": 0.75,
+  "alpha": 0.72,
   "beta": 0.15,
   "gamma_p": 1e-2,
   "init_threshold_lambda": 0.5,

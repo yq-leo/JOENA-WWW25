@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 def make_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset', dest='dataset', type=str, default='ACM-DBLP',
+    parser.add_argument('--dataset', dest='dataset', type=str, default='Phone-Email',
                         choices=['ACM-DBLP', 'cora', 'foursquare-twitter', 'phone-email', 'Douban'],
                         help='datasets: ACM-DBLP; cora; foursquare-twitter; phone-email; Douban')
     parser.add_argument('--ratio', dest='ratio', type=float, default=0.2,
