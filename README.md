@@ -60,3 +60,12 @@ tensorboard --logdir logs/{dataset}_results
 ## Reference
 If you find our work useful for your research, please consider cite JOENA with the following bibtex:
 
+```
+@inproceedings{yu2025joint,
+  title={Joint optimal transport and embedding for network alignment},
+  author={Yu, Qi and Zeng, Zhichen and Yan, Yuchen and Ying, Lei and Srikant, R and Tong, Hanghang},
+  booktitle={Proceedings of the ACM on Web Conference 2025},
+  pages={2064--2075},
+  year={2025}
+}
+```
