@@ -56,3 +56,7 @@ python main.py --dataset={dataset} --use_attr
 ```sh
 tensorboard --logdir logs/{dataset}_results
 ```
+
+## Reference
+If you find our work useful for your research, please consider cite JOENA with the following bibtex:
+

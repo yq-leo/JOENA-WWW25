@@ -22,15 +22,18 @@ class MLP(torch.nn.Module):
 
 
 class FusedGWLoss(torch.nn.Module):
-    def __init__(self, G1_tg, G2_tg, anchor1, anchor2, gw_weight=20, gamma_p=1e-2, init_threshold_lambda=1, in_iter=5,
-                 out_iter=10, total_epochs=250):
+    def __init__(self, G1_tg, G2_tg, anchor1, anchor2, mode, gw_weight=20, gamma_p=1e-2, init_threshold_lambda=1, in_iter=5,
+                 out_iter=10, lambda_step=5e-2, total_epochs=250):
         super().__init__()
         self.device = G1_tg.x.device
         self.gw_weight = gw_weight
         self.gamma_p = gamma_p
         self.in_iter = in_iter
         self.out_iter = out_iter
+        self.lambda_step = lambda_step
         self.total_epochs = total_epochs
+        self.mode = mode
+        self.alpha = 0.95
 
         self.n1, self.n2 = G1_tg.num_nodes, G2_tg.num_nodes
         self.threshold_lambda = init_threshold_lambda / (self.n1 * self.n2)
@@ -38,10 +41,15 @@ class FusedGWLoss(torch.nn.Module):
         self.H = torch.ones(self.n1, self.n2).to(torch.float64).to(self.device)
         self.H[anchor1, anchor2] = 0
 
-    def forward(self, out1, out2):
+    def forward(self, out1, out2, x1, x2):
         inter_c = torch.exp(-(out1 @ out2.T))
         intra_c1 = torch.exp(-(out1 @ out1.T)) * self.adj1
         intra_c2 = torch.exp(-(out2 @ out2.T)) * self.adj2
+        if self.mode == 1 and x1 is not None and x2 is not None:
+            inter_c = self.alpha * inter_c + (1 - self.alpha) * torch.exp(-(x1 @ x2.T))
+            intra_c1 = self.alpha * intra_c1 + (1 - self.alpha) * torch.exp(-(x1 @ x1.T)) * self.adj1
+            intra_c2 = self.alpha * intra_c2 + (1 - self.alpha) * torch.exp(-(x2 @ x2.T)) * self.adj2
+
         with torch.no_grad():
             s = sinkhorn_stable(inter_c, intra_c1, intra_c2,
                                 gw_weight=self.gw_weight,
@@ -50,7 +58,7 @@ class FusedGWLoss(torch.nn.Module):
                                 in_iter=self.in_iter,
                                 out_iter=self.out_iter,
                                 device=self.device)
-            self.threshold_lambda = 0.05 * self.update_lambda(inter_c, intra_c1, intra_c2, s) + 0.95 * self.threshold_lambda
+            self.threshold_lambda = self.lambda_step * self.update_lambda(inter_c, intra_c1, intra_c2, s) + (1 - self.lambda_step) * self.threshold_lambda
 
         s_hat = s - self.threshold_lambda
 

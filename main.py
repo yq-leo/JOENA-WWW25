@@ -30,21 +30,21 @@ if __name__ == '__main__':
 
     # load data and build networkx graphs
     print("Loading data...", end=" ")
-    edge_index1, edge_index2, x1, x2, anchor_links, test_pairs = load_data(f"datasets/{args.dataset}", args.ratio,
+    edge_index1, edge_index2, feat1, feat2, anchor_links, test_pairs = load_data(f"datasets/{args.dataset}", args.ratio,
                                                                            args.use_attr, dtype=np.float64)
     anchor1, anchor2 = anchor_links[:, 0], anchor_links[:, 1]
-    G1, G2 = build_nx_graph(edge_index1, anchor1, x1), build_nx_graph(edge_index2, anchor2, x2)
+    G1, G2 = build_nx_graph(edge_index1, anchor1, feat1), build_nx_graph(edge_index2, anchor2, feat2)
     print("Done")
 
     rwr1, rwr2 = get_rwr_matrix(G1, G2, anchor_links, args.dataset, args.ratio, dtype=np.float64)
-    if x1 is None:
+    if feat1 is None or args.mode == 1:
         x1 = rwr1
     else:
-        x1 = np.concatenate([x1, rwr1], axis=1)
-    if x2 is None:
+        x1 = np.concatenate([feat1, rwr1], axis=1)
+    if feat2 is None or args.mode == 1:
         x2 = rwr2
     else:
-        x2 = np.concatenate([x2, rwr2], axis=1)
+        x2 = np.concatenate([feat2, rwr2], axis=1)
 
     # device setting
     assert torch.cuda.is_available() or args.device == 'cpu', 'CUDA is not available'
@@ -54,6 +54,8 @@ if __name__ == '__main__':
     # build PyG Data objects
     G1_tg = build_tg_graph(edge_index1, x1, rwr1, dtype=torch.float64).to(device)
     G2_tg = build_tg_graph(edge_index2, x2, rwr2, dtype=torch.float64).to(device)
+    feat1 = torch.tensor(feat1, dtype=torch.float64).to(device) if feat1 is not None else None
+    feat2 = torch.tensor(feat2, dtype=torch.float64).to(device) if feat2 is not None else None
     n1, n2 = G1_tg.x.shape[0], G2_tg.x.shape[0]
     args.gw_weight = args.alpha / (1 - args.alpha) * min(n1, n2) ** 0.5
 
@@ -72,6 +74,7 @@ if __name__ == '__main__':
                     output_dim=args.out_dim).to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         criterion = FusedGWLoss(G1_tg, G2_tg, anchor1, anchor2,
+                                mode=args.mode,
                                 gw_weight=args.gw_weight,
                                 gamma_p=args.gamma_p,
                                 init_threshold_lambda=args.init_threshold_lambda,
@@ -87,7 +90,7 @@ if __name__ == '__main__':
             start = time.time()
             optimizer.zero_grad()
             out1, out2 = model(G1_tg, G2_tg)
-            loss, similarity, threshold_lambda = criterion(out1=out1, out2=out2)
+            loss, similarity, threshold_lambda = criterion(out1=out1, out2=out2, x1=feat1, x2=feat2)
             loss.backward()
             optimizer.step()
             print(f'Epoch {epoch + 1}, Loss: {loss.item():.6f}', end=', ')

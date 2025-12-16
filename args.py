@@ -17,6 +17,7 @@ def make_args():
     # Model settings
     parser.add_argument('--hidden_dim', dest='hidden_dim', type=int, default=128, help='hidden dimension')
     parser.add_argument('--out_dim', dest='out_dim', type=int, default=128, help='output dimension')
+    parser.add_argument('--mode', dest='mode', type=int, default=1, help='mode for attributed alignment')
 
     # Loss settings
     parser.add_argument('--alpha', dest='alpha', type=float, default=0.9, help='weight of gw distance')
