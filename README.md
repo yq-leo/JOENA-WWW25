@@ -58,7 +58,7 @@ tensorboard --logdir logs/{dataset}_results
 ```
 
 ## Reference
-If you find our work useful for your research, please consider cite JOENA with the following bibtex:
+If you find our work useful for your research, please consider citing JOENA with the following bibtex:
 
 ```
 @inproceedings{yu2025joint,
